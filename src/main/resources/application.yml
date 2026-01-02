@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: crypto-price-persister
+  
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}        # RabbitMQ broker hostname
+    port: ${RABBITMQ_PORT:5672}             # AMQP port
+    username: ${RABBITMQ_USER:guest}        # Authentication username
+    password: ${RABBITMQ_PASSWORD:guest}    # Authentication password
+    virtual-host: ${RABBITMQ_VHOST:/}       # Virtual host for isolation
+    
+    listener:
+      simple:
+        acknowledge-mode: manual            # Manual ACK for reliability
+        prefetch: 100                       # Messages to preload per consumer
+        default-requeue-rejected: true      # Requeue failed messages
+        retry:
+          enabled: false                    # Disable automatic retries
+        
+    template:
+      retry:
+        enabled: false                      # Disable template retry
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/test  # PostgreSQL connection URL
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:myuser}
+    password: ${DB_PASSWORD:secret}
+    hikari:
+      maximum-pool-size: 10                 # Max connections in pool
+      minimum-idle: 2                       # Min idle connections
+      connection-timeout: 30000             # Connection timeout (ms)
+      idle-timeout: 600000                  # Idle connection timeout (ms)
+      max-lifetime: 1800000                 # Max connection lifetime (ms)
+      
+  sql:
+    init:
+      mode: always                          # Always run schema initialization
+      schema-locations: classpath:schema.sql
+      continue-on-error: false              # Stop on schema errors
+
+# Custom RabbitMQ topology
+rabbitmq:
+  prices-queue: ${PRICES_QUEUE:currency-update}                      # Queue name for price updates
+  batch-size: ${BATCH_SIZE:25}                                       # Initial batch size (scales 25-500)
+
+logging:
+  level:
+    root: INFO                              # Default log level
+    run.buildspace.crypto.price.consumer: INFO  # Application logs
+    org.springframework.amqp: INFO          # RabbitMQ logs
+    org.springframework.jdbc: DEBUG         # SQL logs
+  
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus  # Exposed endpoints
+  endpoint:
+    health:
+      show-details: always                  # Show detailed health info
+  metrics:
+    export:
+      prometheus:
+        enabled: true                       # Enable Prometheus metrics

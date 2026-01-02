@@ -1,0 +1,18 @@
+spring:
+  docker:
+    compose:
+      enabled: false
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 5000
+      validation-timeout: 3000
+      max-lifetime: 60000
+      leak-detection-threshold: 30000
+
+# Custom RabbitMQ properties
+rabbitmq:
+  exchange: cryptocurrencies
+  prices-queue: currency-update
+  currency-update-routing-bind: "#.price.update"
+  batch-size: 25
